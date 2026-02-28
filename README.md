@@ -1,2 +1,2 @@
-# -url-shortener
+# url-shortener
 тестовое задание в ozon
