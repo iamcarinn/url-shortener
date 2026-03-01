@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/exp/slog"
+	"github.com/go-chi/render"
 )
 
 type Request struct {
@@ -29,6 +30,11 @@ func New(log *slog.Logger, storage storage.Storage) http.HandlerFunc {
 		)
 
 		// TODO: доделать
+		var req Request
+		err := render.DecodeJSON(r.Body, &req)
+		if err != nil {
+			// TODO: логировать
+		}
 	}
 
 }
