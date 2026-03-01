@@ -1,0 +1,17 @@
+env: "local"
+
+storage:
+  type: "memory" # memory или postgres
+
+postgres:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "url-shortener"
+  sslmode: "disable"
+
+http_server:
+  address: "localhost:8080"
+  timeout: 4s
+  idle_timeout: 60s
