@@ -1,9 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -58,4 +61,17 @@ func MustLoad() *Config{
 	}
 
 	return &cfg
+}
+
+// Собираем строку подкл. к бд
+func (p PostgresConfig) DSN() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		url.QueryEscape(p.User),
+		url.QueryEscape(p.Password),
+		p.Host,
+		p.Port,
+		p.DBName,
+		p.SSLMode,
+	)
 }

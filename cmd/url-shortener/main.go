@@ -4,6 +4,10 @@ import (
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/storage"
+	"url-shortener/internal/storage/postgres"
+	"url-shortener/internal/storage/memory"
+	
 )
 
 const (
@@ -13,24 +17,37 @@ const (
 )
 
 func main() {
-	// TODO: init config: cleanenv
+	// init config: cleanenv
 	cfg := config.MustLoad()
 	//fmt.Println(cfg)
 
-	// TODO: init logger: slog (обертка для логгера)
+	// init logger: slog
 	log := setupLogger(cfg.Env)
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
-	// TODO: init storages: postgres
-	
+	// init storage
+	var st storage.Storage
+	switch cfg.Storage.Type {
+	case "memory":
+		st = memory.New()
+	case "postgres":
+		dsn := cfg.Postgres.DSN()
+		pg, err := postgres.New(dsn)
+		if err != nil {
+			log.Error("fail init postgres storage", slog.String("dsn", dsn), slog.Any("error", err))
+			os.Exit(1)
+		}
+		st = pg
+	}
+	_ = st
 
 	// TODO: init router: chi
 
 	// TODO: run server
 }
 
-// Логгирование, его установка зависит от пар-ра env
+// Логгирование, так как его установка зависит от пар-ра env
 func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 
