@@ -7,7 +7,8 @@ import (
 	"url-shortener/internal/storage"
 	"url-shortener/internal/storage/postgres"
 	"url-shortener/internal/storage/memory"
-	
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -42,8 +43,14 @@ func main() {
 	}
 	_ = st
 
-	// TODO: init router: chi
-
+	// init router: chi
+	router := chi.NewRouter()
+	// middleware
+	router.Use(middleware.RequestID)	// добавляем к каждому запросу id, исп. для логгирования
+	router.Use(middleware.Logger)		// логгируем каждый запрос (*исп-ет свой логгер)
+	router.Use(middleware.Recoverer)	// если на сервере паника, восстанавливаем
+	router.Use(middleware.URLFormat)	// парсер urlов поступающих запросов
+	
 	// TODO: run server
 }
 

@@ -3,8 +3,10 @@ module url-shortener
 go 1.25.5
 
 require (
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.8.0
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 )
 
 require (
