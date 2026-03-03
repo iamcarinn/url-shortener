@@ -3,6 +3,7 @@ package save
 import (
 	"errors"
 	"net/http"
+	"log/slog"
 	"url-shortener/internal/lib/api/response"
 	"url-shortener/internal/lib/logger/sl"
 	"url-shortener/internal/lib/random"
@@ -11,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
-	"golang.org/x/exp/slog"
+
 )
 
 type Request struct {
@@ -26,7 +27,7 @@ type Response struct {
 
 const aliasLength = 10
 
-func New(log *slog.Logger, storage storage.Storage) http.HandlerFunc {
+func New(log *slog.Logger, st storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request)  {
 		const op = "handlers.url.save.New"
 
@@ -66,17 +67,35 @@ func New(log *slog.Logger, storage storage.Storage) http.HandlerFunc {
 		}
 		// TODO: доделать
 		// TODO: сделать проверку, если уже есть такой алиас
-		id, err := urlSaver.SaveURL(req.URL, alias)
+		err = st.SaveURL(req.URL, alias)
 
 		if errors.Is(err, storage.ErrURLExists) {
 			log.Info("url already exists", slog.String("url", req.URL))
+
 			render.JSON(w, r, response.Error("url already exists"))
 
 			return 
 		}
 
+		if err != nil {
+			log.Error("fail add url", sl.Err(err))
 
+			render.JSON(w, r, response.Error("fail add url"))
+
+			return 
+		}
+
+		log.Info("url added", slog.String("url", req.URL))
+
+		responseOK(w, r, alias)
 
 	}
 
+}
+
+func responseOK(w http.ResponseWriter, r *http.Request, alias string) {
+	render.JSON(w, r, Response{
+		Response: response.OK(),
+		Alias: alias,
+	})
 }

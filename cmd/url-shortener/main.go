@@ -2,11 +2,14 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/http-server/handlers/url/save"
 	"url-shortener/internal/storage"
-	"url-shortener/internal/storage/postgres"
 	"url-shortener/internal/storage/memory"
+	"url-shortener/internal/storage/postgres"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -18,11 +21,11 @@ const (
 )
 
 func main() {
-	// init config: cleanenv
+	// init config
 	cfg := config.MustLoad()
 	//fmt.Println(cfg)
 
-	// init logger: slog
+	// init logger
 	log := setupLogger(cfg.Env)
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
@@ -43,7 +46,7 @@ func main() {
 	}
 	_ = st
 
-	// init router: chi
+	// init router
 	router := chi.NewRouter()
 	// middleware
 	router.Use(middleware.RequestID)	// добавляем к каждому запросу id, исп. для логгирования
@@ -51,7 +54,24 @@ func main() {
 	router.Use(middleware.Recoverer)	// если на сервере паника, восстанавливаем
 	router.Use(middleware.URLFormat)	// парсер urlов поступающих запросов
 	
-	// TODO: run server
+	router.Post("/url", save.New(log, st))
+	log.Info("starting server", slog.String("address", cfg.Storage.Type))
+
+	// init server
+	srv := &http.Server{
+		Addr: cfg.HTTPServer.Address,
+		Handler: router,
+		ReadTimeout: cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout: cfg.HTTPServer.IdleTimeout,
+	}
+	// run server
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("fail start server")
+	}
+
+	log.Error("server stopped")
+
 }
 
 // Логгирование, так как его установка зависит от пар-ра env
