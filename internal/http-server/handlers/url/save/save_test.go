@@ -75,10 +75,7 @@ func TestSaveHandler(t *testing.T) {
 			// настройка мока
 			if tc.respError == "" || tc.mockError != nil {
 				// ожидаем, когда будет вызов SaveURL с url и любым алиасом, то вернуть ошибку
-				StorageMock.EXPECT().
-					SaveURL(tc.url, gomock.Any()).
-					Return(tc.mockError).
-					Times(1) // ожидаем вызов SaveURL 1 раз
+				StorageMock.EXPECT().SaveURL(tc.url, gomock.Any()).Return(tc.mockError).Times(1) // ожидаем вызов SaveURL 1 раз
 			}
 			// создаем хендлер
 			handler := save.New(slogdiscard.NewDiscardLogger(), StorageMock)
