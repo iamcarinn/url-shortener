@@ -53,17 +53,3 @@ func (st *Storage) GetURL(alias string) (string, error) {
 
 	return st.aliasUrl[alias], nil
 }
-
-func (st *Storage) DeleteURL(alias string) error {
-	st.mu.Lock()
-	defer st.mu.Unlock()
-
-	url, ok := st.aliasUrl[alias]
-	if !ok {
-		return storage.ErrURLNotFound
-	}
-	
-	delete(st.aliasUrl, alias)
-	delete(st.urlAlias, url)
-	return nil
-}

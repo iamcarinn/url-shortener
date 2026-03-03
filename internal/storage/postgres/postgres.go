@@ -96,32 +96,3 @@ func (st *Storage) GetURL(alias string) (string, error) {
 
 	return url, nil
 }
-
-// TODO: в целом не нужно
-// Удаление URL по алиасу
-func (st *Storage) DeleteURL(alias string) error {
-	const op = "storage.postgres.DeleteURL"
-
-	// Подготовка запроса
-	stmt, err := st.db.Prepare(`DELETE FROM url WHERE alias = $1`)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	// Выполнение запроса
-	result, err := stmt.Exec(alias)
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	// Проверка, что удалилось
-	rowsDel, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	if rowsDel == 0 { // Найдено ноль строк для удаления
-		return fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
-	}
-	
-	return nil
-}

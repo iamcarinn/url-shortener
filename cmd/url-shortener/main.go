@@ -9,6 +9,7 @@ import (
 	"url-shortener/internal/storage"
 	"url-shortener/internal/storage/memory"
 	"url-shortener/internal/storage/postgres"
+	"url-shortener/internal/http-server/handlers/redirect"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -55,6 +56,8 @@ func main() {
 	router.Use(middleware.URLFormat)	// парсер urlов поступающих запросов
 	
 	router.Post("/url", save.New(log, st))
+	router.Get("/{alias}", redirect.New(log, st))
+
 	log.Info("starting server", slog.String("address", cfg.Storage.Type))
 
 	// init server
