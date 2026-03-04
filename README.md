@@ -25,3 +25,8 @@ Content-Length: 37
 
 {"status":"OK","alias":"ACDEFGHIJK"}
 ```
+
+Тесты
+```
+go test ./tests -v
+```
