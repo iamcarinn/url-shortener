@@ -7,6 +7,8 @@ import (
 	"url-shortener/internal/storage"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 )
 
 // Реализация хранилища PostgreSQL
@@ -30,21 +32,16 @@ func New(dbPath string) (*Storage, error) {
 	}
 
 	// Создать табл, если еще нет
-    stmt, err := db.Prepare(`
-    CREATE TABLE IF NOT EXISTS url(
-        id BIGSERIAL PRIMARY KEY,
-        alias TEXT NOT NULL UNIQUE,
-        url TEXT NOT NULL);
-    CREATE INDEX IF NOT EXISTS idx_alias ON url(alias);
-    `)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	_, err = stmt.Exec()
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS url(
+			alias TEXT PRIMARY KEY,
+			url TEXT NOT NULL UNIQUE
+		);
+	`)
+	if err != nil { return nil, fmt.Errorf("...: create table: %w", err) }
+	
+	_, err = db.Exec(`CREATE INDEX IF NOT EXISTS idx_alias ON url(alias);`)
+	if err != nil { return nil, fmt.Errorf("...: create index: %w", err) }
 
 	return &Storage{db: db}, nil
 }
@@ -53,17 +50,9 @@ func New(dbPath string) (*Storage, error) {
 func (st *Storage) SaveURL(urlToSave string, alias string) (error) {
 	const op = "storage.postgres.SaveURL"
 
-	// Подготовка запроса
-	stmt, err := st.db.Prepare(`INSERT INTO url (url, alias) VALUES ($1, $2) RETURNING id`)
+	// Запрос
+	_, err := st.db.Exec(`INSERT INTO url (alias, url) VALUES ($1, $2)`, alias, urlToSave)
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	
-	// Выполнение запроса
-	var id int64
-	err = stmt.QueryRow(urlToSave, alias).Scan(&id)	
-	if err != nil {
-		// Проверка алиаса на уникальность
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return fmt.Errorf("%s: %w", op, storage.ErrURLExists)

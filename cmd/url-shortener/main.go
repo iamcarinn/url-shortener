@@ -25,7 +25,9 @@ func main() {
 	// init config
 	cfg := config.MustLoad()
 	//fmt.Println(cfg)
-
+	if v := os.Getenv("STORAGE_TYPE"); v != "" {
+		cfg.Storage.Type = v
+	}
 	// init logger
 	log := setupLogger(cfg.Env)
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
@@ -55,7 +57,17 @@ func main() {
 	router.Use(middleware.Recoverer)	// если на сервере паника, восстанавливаем
 	router.Use(middleware.URLFormat)	// парсер urlов поступающих запросов
 	
-	router.Post("/url", save.New(log, st))
+	//Авторизация
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string {
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+
+		r.Post("/", save.New(log, st))
+	})
+
+
+	//router.Post("/url", save.New(log, st))
 	router.Get("/{alias}", redirect.New(log, st))
 
 	log.Info("starting server", slog.String("address", cfg.Storage.Type))

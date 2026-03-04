@@ -17,7 +17,7 @@ import (
 
 type Request struct {
 	URL string `json:"url" validate:"required,url"`
-	Alias string `json:"alias,omitempty"`
+	Alias string `json:"alias,omitempty" validate:"omitempty,max=10"`
 }
 
 type Response struct {
@@ -65,8 +65,7 @@ func New(log *slog.Logger, st storage.Storage) http.HandlerFunc {
 			// генерируем если нет
 			alias = random.NewRandomString(aliasLength)
 		}
-		// TODO: доделать
-		// TODO: сделать проверку, если уже есть такой алиас
+
 		err = st.SaveURL(req.URL, alias)
 
 		if errors.Is(err, storage.ErrURLExists) {
